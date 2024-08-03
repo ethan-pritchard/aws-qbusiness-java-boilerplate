@@ -9,7 +9,7 @@ import software.amazon.awssdk.services.qbusiness.model.StopDataSourceSyncJobRequ
 
 import java.util.Objects;
 
-import static com.ethanpritchard.example.dagger.modules.QBusinessModule.qBusinessClient;
+import static com.ethanpritchard.example.dagger.modules.QBusinessModule.getQBusinessClient;
 
 @Slf4j
 public class StopQBusinessExecutionHandler implements RequestHandler<StopQBusinessExecutionRequest, StopQBusinessExecutionResponse> {
@@ -24,7 +24,7 @@ public class StopQBusinessExecutionHandler implements RequestHandler<StopQBusine
                 .dataSourceId(request.getDataSourceId())
                 .indexId(request.getIndexId())
                 .build();
-        qBusinessClient.stopDataSourceSyncJob(apiRequest);
+        getQBusinessClient().stopDataSourceSyncJob(apiRequest);
 
         return StopQBusinessExecutionResponse.builder().build();
     }

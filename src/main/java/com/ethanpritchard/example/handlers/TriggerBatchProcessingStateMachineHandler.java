@@ -11,9 +11,9 @@ import software.amazon.awssdk.services.sfn.model.StartExecutionResponse;
 
 import java.util.Objects;
 
-import static com.ethanpritchard.example.dagger.modules.JacksonModule.OBJECT_MAPPER;
-import static com.ethanpritchard.example.dagger.modules.StepFunctionsModule.BATCH_PROCESSING_STATE_MACHINE_ARN;
-import static com.ethanpritchard.example.dagger.modules.StepFunctionsModule.sfnClient;
+import static com.ethanpritchard.example.dagger.modules.JacksonModule.getOBJECT_MAPPER;
+import static com.ethanpritchard.example.dagger.modules.StepFunctionsModule.getBATCH_PROCESSING_STATE_MACHINE_ARN;
+import static com.ethanpritchard.example.dagger.modules.StepFunctionsModule.getSfnClient;
 
 @Slf4j
 public class TriggerBatchProcessingStateMachineHandler implements RequestHandler<TriggerBatchProcessingStateMachineRequest, TriggerBatchProcessingStateMachineResponse> {
@@ -30,10 +30,10 @@ public class TriggerBatchProcessingStateMachineHandler implements RequestHandler
         StartExecutionResponse apiResponse;
         try {
             StartExecutionRequest apiRequest = StartExecutionRequest.builder()
-                    .input(OBJECT_MAPPER.writeValueAsString(request)) // json String
-                    .stateMachineArn(BATCH_PROCESSING_STATE_MACHINE_ARN)
+                    .input(getOBJECT_MAPPER().writeValueAsString(request)) // json String
+                    .stateMachineArn(getBATCH_PROCESSING_STATE_MACHINE_ARN())
                     .build();
-            apiResponse = sfnClient.startExecution(apiRequest);
+            apiResponse = getSfnClient().startExecution(apiRequest);
             log.info("Successfully started batch processing state machine: {}", apiResponse.executionArn());
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

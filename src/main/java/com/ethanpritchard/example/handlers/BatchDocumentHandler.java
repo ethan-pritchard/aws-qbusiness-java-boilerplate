@@ -13,7 +13,7 @@ import software.amazon.awssdk.services.qbusiness.model.Document;
 import java.util.Iterator;
 import java.util.Objects;
 
-import static com.ethanpritchard.example.dagger.modules.QBusinessModule.qBusinessClient;
+import static com.ethanpritchard.example.dagger.modules.QBusinessModule.getQBusinessClient;
 
 @Slf4j
 public class BatchDocumentHandler implements RequestHandler<BatchDocumentRequest, BatchDocumentResponse> {
@@ -25,6 +25,7 @@ public class BatchDocumentHandler implements RequestHandler<BatchDocumentRequest
         if (Objects.isNull(request.getQBusinessExecutionId())) throw new IllegalArgumentException("qBusinessExecutionId null");
         if (Objects.isNull(request.getStartDate())) throw new IllegalArgumentException("startDate null");
         if (Objects.isNull(request.getEndDate())) throw new IllegalArgumentException("endDate null");
+        if (request.getEndDate() < request.getStartDate()) throw new IllegalArgumentException("endDate < startDate");
 
         // todo: Fetch persistence w/ nextToken (optional) and startTime (if not -1)
         String newNextToken = request.getNextToken().equalsIgnoreCase("123") ? "" : "123";
@@ -42,7 +43,7 @@ public class BatchDocumentHandler implements RequestHandler<BatchDocumentRequest
                                 .documents(batch)
                                 .indexId(request.getIndexId())
                                 .build();
-                        BatchPutDocumentResponse batchPutDocumentResponse = qBusinessClient.batchPutDocument(batchPutDocumentRequest);
+                        BatchPutDocumentResponse batchPutDocumentResponse = getQBusinessClient().batchPutDocument(batchPutDocumentRequest);
                         if (batchPutDocumentResponse.hasFailedDocuments()) {
                             log.warn("qbusiness:BatchPutDocument failed document count: {} | Request ID: {}",
                                     batchPutDocumentResponse.failedDocuments().size(),

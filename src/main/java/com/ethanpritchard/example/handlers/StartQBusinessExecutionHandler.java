@@ -10,7 +10,7 @@ import software.amazon.awssdk.services.qbusiness.model.StartDataSourceSyncJobRes
 
 import java.util.Objects;
 
-import static com.ethanpritchard.example.dagger.modules.QBusinessModule.qBusinessClient;
+import static com.ethanpritchard.example.dagger.modules.QBusinessModule.getQBusinessClient;
 
 @Slf4j
 public class StartQBusinessExecutionHandler implements RequestHandler<StartQBusinessExecutionRequest, StartQBusinessExecutionResponse> {
@@ -25,7 +25,7 @@ public class StartQBusinessExecutionHandler implements RequestHandler<StartQBusi
                 .dataSourceId(request.getDataSourceId())
                 .indexId(request.getIndexId())
                 .build();
-        StartDataSourceSyncJobResponse apiResponse = qBusinessClient.startDataSourceSyncJob(apiRequest);
+        StartDataSourceSyncJobResponse apiResponse = getQBusinessClient().startDataSourceSyncJob(apiRequest);
 
         return StartQBusinessExecutionResponse.builder()
                 .qBusinessExecutionId(apiResponse.executionId())
