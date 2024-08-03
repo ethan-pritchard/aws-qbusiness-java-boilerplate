@@ -21,7 +21,7 @@ For larger workflows, I recommend the
 [AWS Step Functions Parallel state](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-parallel-state.html)
 instead of recursion.
 
-![alt](https://i.imgur.com/ANw1mcR.png)
+![alt](https://i.imgur.com/UxlJf2Y.png)
 
 #### How To Use
 Trigger `TriggerBatchProcessingStateMachineFunction` with this input:
