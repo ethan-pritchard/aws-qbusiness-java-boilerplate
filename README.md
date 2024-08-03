@@ -31,11 +31,21 @@ Trigger `TriggerBatchProcessingStateMachineFunction` with this input:
     "dataSourceId": "Q Business data source Id",
     "indexId": "Q Business index Id",
     "maxPages": Max nextTokens to consume,
-    "nextToken": "Paginated next token used for BatchDocument (Use empty string if no nextToken)",
-    "startDate": -1 OR valid,
-    "endDate": -1
+    "nextToken": "" OR Paginated next token,
+    "startDate": -1 OR Valid timestamp,
+    "endDate": -1 OR Valid timestamp
 }
 ```
+There are four configurations of parameters for the `TriggerBatchProcessingStateMachineFunction`:
+- `nextToken` is `""`. `startDate`/`endDate` are `-1`
+  - Starts at beginning of pagination API
+- `nextToken` is `""`. `startDate`/`endDate` are `timestamp`
+  - Starts at beginning of timeframe filtered pagination API
+- `nextToken` is `paginated next token`. `startDate`/`endDate` are `-1`
+  - Starts at pagination next token of pagination API
+- `nextToken` is `paginated next token`. `startDate`/`endDate` are `timestamp`
+  - Starts at pagination next token of timeframe filtered pagination API
+
 Optionally, add automation using [AWS EventBridge Scheduler](https://docs.aws.amazon.com/lambda/latest/dg/with-eventbridge-scheduler.html) to trigger `TriggerBatchProcessingStateMachineFunction` on a schedule.
 
 This boilerplate also includes the `startDate` and `endDate` parameters which are `Double` timestamps.
