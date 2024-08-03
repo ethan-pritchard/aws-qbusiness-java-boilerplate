@@ -11,11 +11,13 @@ An AWS Step Function state machine which when executed:
 - Calls BatchDocument which fetches documents from your persistence, transforms documents into AWS Q Business Documents, and uses [`qbusiness:BatchPutDocument`](https://docs.aws.amazon.com/amazonq/latest/api-reference/API_BatchPutDocument.html) to iteratively index AWS Q Business Documents
 
 This boilerplate demonstrates its flexibility by adding pagination support with the following modifications:
-- Added optional parameters `nextToken` and `maxPages`
+- Added parameters `maxPages` `nextToken` `startDate` `endDate`
 - Modified BatchDocument in order to:
-  - Consume `nextToken` in the request
+  - Consume `nextToken` `startDate` `endDate` in the request
   - Output a `nextToken` if applicable
-- Modified AWS Step Functions state machine in order to recursively increment the `currentPage` for each BatchDocument request
+  - Passthrough `startDate` `endDate` into the response
+- Modified batch processing state machine in order to recursively increment the `currentPage` for each BatchDocument request
+- Modified batch processing state machine in order to recursively call BatchDocument with the refreshed `nextToken` until `currentPage` exceeds `maxPages` or `nextToken` is `""`
 
 For larger workflows, I recommend the
 [AWS Step Functions Parallel state](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-parallel-state.html)
