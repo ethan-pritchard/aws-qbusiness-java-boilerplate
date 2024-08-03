@@ -16,4 +16,6 @@ public class BatchDocumentRequest {
     private String indexId;
     private String nextToken;
     private String qBusinessExecutionId;
+    private Double startDate;
+    private Double endDate;
 }

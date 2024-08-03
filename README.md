@@ -31,10 +31,16 @@ Trigger `TriggerBatchProcessingStateMachineFunction` with this input:
     "dataSourceId": "Q Business data source Id",
     "indexId": "Q Business index Id",
     "maxPages": Max nextTokens to consume,
-    "nextToken": "Paginated next token used for BatchDocument (Use empty string if no nextToken)"
+    "nextToken": "Paginated next token used for BatchDocument (Use empty string if no nextToken)",
+    "startDate": -1 OR valid,
+    "endDate": -1
 }
 ```
 Optionally, add automation using [AWS EventBridge Scheduler](https://docs.aws.amazon.com/lambda/latest/dg/with-eventbridge-scheduler.html) to trigger `TriggerBatchProcessingStateMachineFunction` on a schedule.
+
+This boilerplate also includes the `startDate` and `endDate` parameters which are `Double` timestamps.
+These parameters can be used instead of `nextToken` to search a timeframe instead of a subset.
+`startDate` and `endDate` should both be `-1` or both be a valid timestamp range.
 
 ## Deployment
 - `aws s3api create-bucket --bucket <bucket name>`

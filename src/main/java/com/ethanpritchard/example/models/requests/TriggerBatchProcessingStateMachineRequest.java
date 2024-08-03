@@ -17,4 +17,6 @@ public class TriggerBatchProcessingStateMachineRequest {
     private String indexId;
     private Integer maxPages;
     private String nextToken;
+    private Double startDate;
+    private Double endDate;
 }

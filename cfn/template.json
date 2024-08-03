@@ -135,9 +135,17 @@
         "Description": "Q Business Application.",
         "DisplayName": "QBusinessApplication",
         "IdentityCenterInstanceArn": {
-          "Fn::GetAtt": [
-            "IdCInstance",
-            "InstanceArn"
+          "Fn::If": [
+            "IdCNotProvided",
+            {
+              "Fn::GetAtt": [
+                "IdCInstance",
+                "InstanceArn"
+              ]
+            },
+            {
+              "Ref": "IdCInstanceArn"
+            }
           ]
         },
         "QAppsConfiguration": {
@@ -860,13 +868,15 @@
                 "currentPage": 0
               },
               "ResultPath": "$.currentPage",
-              "Next": "CopyNextTokenForRecursion"
+              "Next": "CopyParametersForRecursion"
             },
 
-            "CopyNextTokenForRecursion": {
+            "CopyParametersForRecursion": {
               "Type": "Pass",
               "Parameters": {
-                "nextToken.$": "$.nextToken"
+                "nextToken.$": "$.nextToken",
+                "startDate.$": "$.startDate",
+                "endDate.$": "$.endDate"
               },
               "ResultPath": "$.batchDocument",
               "Next": "StartQBusinessExecution"
@@ -909,7 +919,9 @@
                   "applicationId.$": "$.applicationId",
                   "nextToken.$": "$.batchDocument.nextToken",
                   "indexId.$": "$.indexId",
-                  "QBusinessExecutionId.$": "$.startQBusinessExecution.qBusinessExecutionId"
+                  "QBusinessExecutionId.$": "$.startQBusinessExecution.qBusinessExecutionId",
+                  "startDate.$": "$.batchDocument.startDate",
+                  "endDate.$": "$.batchDocument.endDate"
                 },
                 "FunctionName": {
                   "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:BatchDocumentFunction:$LATEST"
@@ -925,7 +937,9 @@
                 }
               ],
               "ResultSelector": {
-                "nextToken.$": "$.Payload.nextToken"
+                "nextToken.$": "$.Payload.nextToken",
+                "startDate.$": "$.Payload.startDate",
+                "endDate.$": "$.Payload.endDate"
               },
               "ResultPath": "$.batchDocument",
               "Next": "CheckNextToken"

@@ -20,8 +20,10 @@ public class BatchDocumentHandler implements RequestHandler<BatchDocumentRequest
         if (Objects.isNull(request.getIndexId())) throw new IllegalArgumentException("indexId null");
         if (Objects.isNull(request.getNextToken())) throw new IllegalArgumentException("nextToken null");
         if (Objects.isNull(request.getQBusinessExecutionId())) throw new IllegalArgumentException("qBusinessExecutionId null");
+        if (Objects.isNull(request.getStartDate())) throw new IllegalArgumentException("startDate null");
+        if (Objects.isNull(request.getEndDate())) throw new IllegalArgumentException("endDate null");
 
-        // todo: Fetch documents w/ nextToken (optional) or filters
+        // todo: Fetch documents w/ nextToken (optional) and startTime (if not -1)
         String newNextToken = request.getNextToken().equalsIgnoreCase("123") ? "" : "123";
         // todo: Convert documents -> Q Business Document
 
@@ -41,6 +43,8 @@ public class BatchDocumentHandler implements RequestHandler<BatchDocumentRequest
 
         return BatchDocumentResponse.builder()
                 .nextToken(newNextToken) // todo: Get new nextToken from "Fetch Documents"
+                .startDate(request.getStartDate())
+                .endDate(request.getEndDate())
                 .build();
     }
 }

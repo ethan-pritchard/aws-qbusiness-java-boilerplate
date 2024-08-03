@@ -13,4 +13,6 @@ import lombok.Setter;
 @Setter
 public class BatchDocumentResponse {
     private String nextToken;
+    private Double startDate;
+    private Double endDate;
 }
