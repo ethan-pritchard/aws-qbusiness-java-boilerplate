@@ -24,10 +24,6 @@ public class StopQBusinessExecutionHandlerTest extends UnitTest {
 
     @Mock private QBusinessClient qBusinessClient;
 
-    public StopQBusinessExecutionHandlerTest() {
-        super();
-    }
-
     @Test
     public final void test_happyPath() {
         try (MockedStatic<EnvironmentModule> environmentModule = mockStatic(EnvironmentModule.class)) {

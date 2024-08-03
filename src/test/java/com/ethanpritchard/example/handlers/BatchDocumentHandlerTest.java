@@ -16,10 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class BatchDocumentHandlerTest extends UnitTest {
     private final BatchDocumentHandler handler = new BatchDocumentHandler();
 
-    public BatchDocumentHandlerTest() {
-        super();
-    }
-
     @Test
     public final void test_happyPath() {
         BatchDocumentRequest request = createRequest();

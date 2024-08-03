@@ -1,11 +1,7 @@
 package com.ethanpritchard.example;
 
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.util.Random;
 
-@ExtendWith(MockitoExtension.class)
 public abstract class UnitTest {
     public static final String APPLICATION_ID = "APPLICATION_ID";
     public static final String AWS_DEFAULT_REGION = "unit-test";

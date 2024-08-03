@@ -27,10 +27,6 @@ public class TriggerBatchProcessingStateMachineHandlerTest extends UnitTest {
 
     @Mock private SfnClient sfnClient;
 
-    public TriggerBatchProcessingStateMachineHandlerTest() {
-        super();
-    }
-
     @Test
     public final void test_happyPath() {
         try (MockedStatic<EnvironmentModule> environmentModule = mockStatic(EnvironmentModule.class)) {
