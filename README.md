@@ -48,9 +48,9 @@ There are four configurations of parameters for the `TriggerBatchProcessingState
 
 Optionally, add automation using [AWS EventBridge Scheduler](https://docs.aws.amazon.com/lambda/latest/dg/with-eventbridge-scheduler.html) to trigger `TriggerBatchProcessingStateMachineFunction` on a schedule.
 
-This boilerplate also includes the `startDate` and `endDate` parameters which are `Double` timestamps.
-These parameters can be used instead of `nextToken` to search a timeframe instead of a subset.
-`startDate` and `endDate` should both be `-1` or both be a valid timestamp range.
+The `BatchProcessingStateMachine` will recursively call the pagination API until
+- `maxPages` is reached, or
+- `nextToken` output from `BatchDocumentLambda` is `""`
 
 ## Deployment
 - `aws s3api create-bucket --bucket <bucket name>`
