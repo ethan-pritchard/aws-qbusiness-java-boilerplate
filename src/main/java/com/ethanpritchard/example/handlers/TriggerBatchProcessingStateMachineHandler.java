@@ -23,7 +23,7 @@ public class TriggerBatchProcessingStateMachineHandler implements RequestHandler
         if (Objects.isNull(request.getDataSourceId())) throw new IllegalArgumentException("dataSourceId null");
         if (Objects.isNull(request.getIndexId())) throw new IllegalArgumentException("indexId null");
         if (Objects.isNull(request.getMaxPages())) throw new IllegalArgumentException("maxPages null");
-        if (Objects.isNull(request.getNextToken())) throw new IllegalArgumentException("indexId null");
+        if (Objects.isNull(request.getNextToken())) throw new IllegalArgumentException("nextToken null");
 
         StartExecutionResponse apiResponse;
         try {

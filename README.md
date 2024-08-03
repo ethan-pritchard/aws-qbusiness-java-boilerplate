@@ -39,7 +39,7 @@ Optionally, add automation using [AWS EventBridge Scheduler](https://docs.aws.am
 ## Deployment
 - `aws s3api create-bucket --bucket <bucket name>`
 - `aws cloudformation package --template-file ./cfn/template.json --s3-bucket <bucket name> --output-template-file ./target/template.json`
-- `aws cloudformation deploy --template-file ./target/template.json --capabilities "CAPABILITY_NAMED_IAM" --stack-name <stack name>`
+- `aws cloudformation deploy --template-file ./target/template.json --capabilities "CAPABILITY_NAMED_IAM" --stack-name <stack name>` and optionally adding `--parameter-overrides IdCInstanceArn=<idc instance arn>`
 
 ## License
 [LICENSE](/LICENSE)

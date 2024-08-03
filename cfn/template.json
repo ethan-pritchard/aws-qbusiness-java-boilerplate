@@ -610,11 +610,29 @@
                 {
                   "Effect": "Allow",
                   "Action": [
-                    "qbusiness:BatchPutDocument",
+                    "qbusiness:BatchPutDocument"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/index/${QBusinessIndex.IndexId}"
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
                     "qbusiness:StartDataSourceSyncJob",
                     "qbusiness:StopDataSourceSyncJob"
                   ],
-                  "Resource": "*"
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}"
+                    },
+                    {
+                      "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/index/${QBusinessIndex.IndexId}"
+                    },
+                    {
+                      "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/index/${QBusinessIndex.IndexId}/data-source/${QBusinessDataSource.DataSourceId}"
+                    }
+                  ]
                 }
               ]
             },
@@ -629,7 +647,9 @@
                   "Action": [
                     "states:StartExecution"
                   ],
-                  "Resource": "*"
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${BatchProcessingStateMachine.Name}"
+                  }
                 }
               ]
             },
