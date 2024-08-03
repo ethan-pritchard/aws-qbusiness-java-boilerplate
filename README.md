@@ -4,6 +4,14 @@ A java boilerplate for
 infrastructure using a 
 [custom data source connector](https://docs.aws.amazon.com/amazonq/latest/qbusiness-ug/custom-connector.html).
 
+## Getting Started
+This boilerplate has two todos:
+- [Fetch persistence w/ nextToken (optional) and startTime (if not -1)](/src/main/java/com/ethanpritchard/example/handlers/BatchDocumentHandler.java)
+  - Depending on how your data is persisted, you will have to use an API or a client to fetch it. 
+    - If paginated, this API or client will consume `nextToken` and give a new `nextToken`.
+- [Convert persistence -> Q Business Document](/src/main/java/com/ethanpritchard/example/handlers/BatchDocumentHandler.java)
+  - AWS Q Business requires your data to be a [Document structure](https://docs.aws.amazon.com/amazonq/latest/api-reference/API_Document.html) which supports content types such as PDF, HTML, JSON, and more.
+
 ## Workflows
 ### Batch Processing Workflow
 An AWS Step Function state machine which when executed:
