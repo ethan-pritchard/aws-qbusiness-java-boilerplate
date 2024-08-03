@@ -1,0 +1,1060 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "aws-qbusiness-java-boilerplate",
+  "Metadata": {},
+
+  "Parameters": {
+    "IdCInstanceArn": {
+      "Description": "AWS:SSO:Instance ARN used for Q Business Application authentication.",
+      "Type": "String",
+      "Default": ""
+    }
+  },
+
+  "Rules": {},
+  "Mappings": {},
+
+  "Conditions": {
+    "IdCNotProvided": {
+      "Fn::Equals": [
+        {
+          "Ref": "IdCInstanceArn"
+        },
+        ""
+      ]
+    }
+  },
+
+  "Resources": {
+    "IdCInstance": {
+      "Condition": "IdCNotProvided",
+      "Type": "AWS::SSO::Instance",
+      "Properties": {
+        "Name": "idc-instance"
+      }
+    },
+
+    "QBusinessApplicationRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "AmazonQApplicationPermission",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "qbusiness.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                },
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/*"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Description": "IAM Role used by Q Business Application.",
+        "ManagedPolicyArns": [],
+        "MaxSessionDuration": 43200,
+        "Path": "/stack/iam/roles/qbusiness/application/",
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "AmazonQApplicationPutMetricDataPermission",
+                  "Effect": "Allow",
+                  "Action": [
+                    "cloudwatch:PutMetricData"
+                  ],
+                  "Resource": "*",
+                  "Condition": {
+                    "StringEquals": {
+                      "cloudwatch:namespace": "AWS/QBusiness"
+                    }
+                  }
+                },
+                {
+                  "Sid": "AmazonQApplicationDescribeLogGroupsPermission",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:DescribeLogGroups"
+                  ],
+                  "Resource": "*"
+                },
+                {
+                  "Sid": "AmazonQApplicationCreateLogGroupPermission",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/qbusiness/*"
+                    }
+                  ]
+                },
+                {
+                  "Sid": "AmazonQApplicationLogStreamPermission",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:DescribeLogStreams",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/qbusiness/*:log-stream:*"
+                    }
+                  ]
+                }
+              ]
+            },
+            "PolicyName": "AWSQBusinessApplicationAccess"
+          }
+        ],
+        "RoleName": "QBusinessApplicationRole"
+      }
+    },
+    "QBusinessApplication": {
+      "Type": "AWS::QBusiness::Application",
+      "Properties": {
+        "AttachmentsConfiguration": {
+          "AttachmentsControlMode": "ENABLED"
+        },
+        "Description": "Q Business Application.",
+        "DisplayName": "QBusinessApplication",
+        "IdentityCenterInstanceArn": {
+          "Fn::GetAtt": [
+            "IdCInstance",
+            "InstanceArn"
+          ]
+        },
+        "QAppsConfiguration": {
+          "QAppsControlMode": "ENABLED"
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "QBusinessApplicationRole",
+            "Arn"
+          ]
+        }
+      }
+    },
+
+    "QBusinessDataSourceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "AllowsAmazonQToAssumeRoleForServicePrincipal",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "qbusiness.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                },
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Description": "IAM Role used by Q Business Data Source.",
+        "ManagedPolicyArns": [],
+        "MaxSessionDuration": 43200,
+        "Path": "/stack/iam/roles/qbusiness/datasource/",
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "AllowsAmazonQToIngestDocuments",
+                  "Effect": "Allow",
+                  "Action": [
+                    "qbusiness:BatchPutDocument",
+                    "qbusiness:BatchDeleteDocument"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/index/${QBusinessIndex.IndexId}"
+                  }
+                },
+                {
+                  "Sid": "AllowsAmazonQToIngestPrincipalMapping",
+                  "Effect": "Allow",
+                  "Action": [
+                    "qbusiness:PutGroup",
+                    "qbusiness:CreateUser",
+                    "qbusiness:DeleteGroup",
+                    "qbusiness:UpdateUser",
+                    "qbusiness:ListGroups"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}"
+                    },
+                    {
+                      "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/index/${QBusinessIndex.IndexId}"
+                    },
+                    {
+                      "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/index/${QBusinessIndex.IndexId}/data-source/*"
+                    }
+                  ]
+                }
+              ]
+            },
+            "PolicyName": "AWSQBusinessDataSourceAccess"
+          }
+        ],
+        "RoleName": "QBusinessDataSourceRole"
+      }
+    },
+    "QBusinessDataSource": {
+      "Type": "AWS::QBusiness::DataSource",
+      "Properties": {
+        "ApplicationId": {
+          "Fn::GetAtt": [
+            "QBusinessApplication",
+            "ApplicationId"
+          ]
+        },
+        "Configuration": {
+          "type": "CUSTOM",
+          "version": "1.0.0"
+        },
+        "Description": "Q Business Data Source.",
+        "DisplayName": "QBusinessDataSource",
+        "IndexId": {
+          "Fn::GetAtt": [
+            "QBusinessIndex",
+            "IndexId"
+          ]
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "QBusinessDataSourceRole",
+            "Arn"
+          ]
+        }
+      }
+    },
+
+    "QBusinessIndex": {
+      "Type": "AWS::QBusiness::Index",
+      "Properties": {
+        "ApplicationId": {
+          "Fn::GetAtt": [
+            "QBusinessApplication",
+            "ApplicationId"
+          ]
+        },
+        "CapacityConfiguration": {
+          "Units": 1
+        },
+        "Description": "Q Business Index.",
+        "DisplayName": "QBusinessIndex",
+        "Type": "STARTER"
+      }
+    },
+
+    "QBusinessRetriever": {
+      "Type": "AWS::QBusiness::Retriever",
+      "Properties": {
+        "ApplicationId": {
+          "Fn::GetAtt": [
+            "QBusinessApplication",
+            "ApplicationId"
+          ]
+        },
+        "Configuration": {
+          "NativeIndexConfiguration": {
+            "IndexId": {
+              "Fn::GetAtt": [
+                "QBusinessIndex",
+                "IndexId"
+              ]
+            }
+          }
+        },
+        "DisplayName": "QBusinessRetriever",
+        "Type": "NATIVE_INDEX"
+      }
+    },
+
+    "QBusinessWebExperienceRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "QBusinessTrustPolicy",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "application.qbusiness.amazonaws.com"
+              },
+              "Action": [
+                "sts:AssumeRole",
+                "sts:SetContext"
+              ],
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                },
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Description": "IAM Role used by Q Business Web Experience.",
+        "ManagedPolicyArns": [],
+        "MaxSessionDuration": 43200,
+        "Path": "/stack/iam/roles/qbusiness/webexperience/",
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "QBusinessConversationPermission",
+                  "Effect": "Allow",
+                  "Action": [
+                    "qbusiness:Chat",
+                    "qbusiness:ChatSync",
+                    "qbusiness:ListMessages",
+                    "qbusiness:ListConversations",
+                    "qbusiness:DeleteConversation",
+                    "qbusiness:PutFeedback",
+                    "qbusiness:GetWebExperience",
+                    "qbusiness:GetApplication",
+                    "qbusiness:ListPlugins",
+                    "qbusiness:GetChatControlsConfiguration"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}"
+                  }
+                },
+                {
+                  "Sid": "QBusinessKMSDecryptPermissions",
+                  "Effect": "Allow",
+                  "Action": [
+                    "kms:Decrypt"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/*"
+                    }
+                  ],
+                  "Condition": {
+                    "StringLike": {
+                      "kms:ViaService": [
+                        {
+                          "Fn::Sub": "qbusiness.${AWS::Region}.amazonaws.com"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "Sid": "QBusinessSetContextPermissions",
+                  "Effect": "Allow",
+                  "Action": [
+                    "sts:SetContext"
+                  ],
+                  "Resource": [
+                    "arn:aws:sts::*:self"
+                  ],
+                  "Condition": {
+                    "StringLike": {
+                      "aws:CalledViaLast": [
+                        "qbusiness.amazonaws.com"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "PolicyName": "AWSQBusinessWebExperienceAccess"
+          },
+          {
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "QAppsResourceAgnosticPermissions",
+                  "Effect": "Allow",
+                  "Action": [
+                    "qapps:CreateQApp",
+                    "qapps:PredictQApp",
+                    "qapps:PredictProblemStatementFromConversation",
+                    "qapps:PredictQAppFromProblemStatement",
+                    "qapps:ListQApps",
+                    "qapps:ListLibraryItems",
+                    "qapps:CreateSubscriptionToken"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}"
+                  }
+                },
+                {
+                  "Sid": "QAppsAppUniversalPermissions",
+                  "Effect": "Allow",
+                  "Action": [
+                    "qapps:DisassociateQAppFromUser"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:qapps:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/qapp/*"
+                  }
+                },
+                {
+                  "Sid": "QAppsAppOwnerPermissions",
+                  "Effect": "Allow",
+                  "Action": [
+                    "qapps:GetQApp",
+                    "qapps:CopyQApp",
+                    "qapps:UpdateQApp",
+                    "qapps:DeleteQApp",
+                    "qapps:ImportDocument",
+                    "qapps:ImportDocumentToQApp",
+                    "qapps:CreateLibraryItem",
+                    "qapps:UpdateLibraryItem",
+                    "qapps:StartQAppSession"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:qapps:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/qapp/*"
+                  },
+                  "Condition": {
+                    "StringEqualsIgnoreCase": {
+                      "qapps:UserIsAppOwner": "true"
+                    }
+                  }
+                },
+                {
+                  "Sid": "QAppsPublishedAppPermissions",
+                  "Effect": "Allow",
+                  "Action": [
+                    "qapps:GetQApp",
+                    "qapps:CopyQApp",
+                    "qapps:AssociateQAppWithUser",
+                    "qapps:GetLibraryItem",
+                    "qapps:CreateLibraryItemReview",
+                    "qapps:AssociateLibraryItemReview",
+                    "qapps:DisassociateLibraryItemReview",
+                    "qapps:StartQAppSession"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:qapps:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/qapp/*"
+                  },
+                  "Condition": {
+                    "StringEqualsIgnoreCase": {
+                      "qapps:AppIsPublished": "true"
+                    }
+                  }
+                },
+                {
+                  "Sid": "QAppsAppSessionModeratorPermissions",
+                  "Effect": "Allow",
+                  "Action": [
+                    "qapps:ImportDocument",
+                    "qapps:ImportDocumentToQAppSession",
+                    "qapps:GetQAppSession",
+                    "qapps:GetQAppSessionMetadata",
+                    "qapps:UpdateQAppSession",
+                    "qapps:UpdateQAppSessionMetadata",
+                    "qapps:StopQAppSession"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:qapps:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/qapp/*/session/*"
+                  },
+                  "Condition": {
+                    "StringEqualsIgnoreCase": {
+                      "qapps:UserIsSessionModerator": "true"
+                    }
+                  }
+                },
+                {
+                  "Sid": "QAppsSharedAppSessionPermissions",
+                  "Effect": "Allow",
+                  "Action": [
+                    "qapps:ImportDocument",
+                    "qapps:ImportDocumentToQAppSession",
+                    "qapps:GetQAppSession",
+                    "qapps:GetQAppSessionMetadata",
+                    "qapps:UpdateQAppSession"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:qapps:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/qapp/*/session/*"
+                  },
+                  "Condition": {
+                    "StringEqualsIgnoreCase": {
+                      "qapps:SessionIsShared": "true"
+                    }
+                  }
+                }
+              ]
+            },
+            "PolicyName": "AWSQBusinessWebExperienceQAppsAccess"
+          },
+          {
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "QBusinessIndexPermission",
+                  "Effect": "Allow",
+                  "Action": [
+                    "qbusiness:ListIndices"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}"
+                  }
+                },
+                {
+                  "Sid": "QBusinessDataSourcePermission",
+                  "Effect": "Allow",
+                  "Action": [
+                    "qbusiness:ListDataSources"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}"
+                    },
+                    {
+                      "Fn::Sub": "arn:aws:qbusiness:${AWS::Region}:${AWS::AccountId}:application/${QBusinessApplication.ApplicationId}/index/*"
+                    }
+                  ]
+                }
+              ]
+            },
+            "PolicyName": "AWSQBusinessWebExperienceQAppsDataSourceAccess"
+          }
+        ],
+        "RoleName": "QBusinessWebExperienceRole"
+      }
+    },
+    "QBusinessWebExperience": {
+      "Type": "AWS::QBusiness::WebExperience",
+      "Properties": {
+        "ApplicationId": {
+          "Fn::GetAtt": [
+            "QBusinessApplication",
+            "ApplicationId"
+          ]
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "QBusinessWebExperienceRole",
+            "Arn"
+          ]
+        },
+        "SamplePromptsControlMode": "ENABLED",
+        "Subtitle": "Welcome to the web experience!",
+        "Title": "aws-qbusiness-java-boilerplate",
+        "WelcomeMessage": "Use the left sidebar to navigate between pages. Or, start a conversation and optionally upload files."
+      }
+    },
+
+    "LambdaExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Description": "IAM Role used by Lambda functions.",
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        ],
+        "MaxSessionDuration": 43200,
+        "Path": "/stack/iam/roles/lambda/",
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "qbusiness:BatchPutDocument",
+                    "qbusiness:StartDataSourceSyncJob",
+                    "qbusiness:StopDataSourceSyncJob"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            },
+            "PolicyName": "AWSLambdaAWSQBusinessAccess"
+          },
+          {
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "states:StartExecution"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            },
+            "PolicyName": "AWSLambdaAWSStepFunctionsAccess"
+          }
+        ],
+        "RoleName": "LambdaExecutionRole"
+      }
+    },
+    "StepFunctionsStateMachineRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "states.amazonaws.com"
+                ]
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:aws:states:us-east-1:${AWS::AccountId}:stateMachine:*"
+                  }
+                },
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Description": "IAM Role used by Step Functions state machines.",
+        "MaxSessionDuration": 43200,
+        "Path": "/stack/iam/roles/stepfunctions/",
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "lambda:InvokeFunction"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*"
+                    }
+                  ]
+                }
+              ]
+            },
+            "PolicyName": "AWSStepFunctionsAWSLambdaAccess"
+          },
+          {
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogDelivery",
+                    "logs:CreateLogStream",
+                    "logs:GetLogDelivery",
+                    "logs:UpdateLogDelivery",
+                    "logs:DeleteLogDelivery",
+                    "logs:ListLogDeliveries",
+                    "logs:PutLogEvents",
+                    "logs:PutResourcePolicy",
+                    "logs:DescribeResourcePolicies",
+                    "logs:DescribeLogGroups"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            },
+            "PolicyName": "AWSStepFunctionsAWSCloudWatchAccess"
+          }
+        ],
+        "RoleName": "StepFunctionsStateMachineRole"
+      }
+    },
+
+    "BatchDocumentFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "x86_64"
+        ],
+        "Code": "../target/aws-qbusiness-java-boilerplate.jar",
+        "Description": "BatchDocumentFunction.",
+        "FunctionName": "BatchDocumentFunction",
+        "Handler": "com.ethanpritchard.example.handlers.BatchDocumentHandler",
+        "MemorySize": 1280,
+        "PackageType": "Zip",
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        },
+        "Runtime": "java11",
+        "Timeout": 60
+      }
+    },
+    "StartQBusinessExecutionFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "x86_64"
+        ],
+        "Code": "../target/aws-qbusiness-java-boilerplate.jar",
+        "Description": "StartQBusinessExecutionFunction.",
+        "FunctionName": "StartQBusinessExecutionFunction",
+        "Handler": "com.ethanpritchard.example.handlers.StartQBusinessExecutionHandler",
+        "MemorySize": 1280,
+        "PackageType": "Zip",
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        },
+        "Runtime": "java11",
+        "Timeout": 60
+      }
+    },
+    "StopQBusinessExecutionFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "x86_64"
+        ],
+        "Code": "../target/aws-qbusiness-java-boilerplate.jar",
+        "Description": "StopQBusinessExecutionFunction.",
+        "FunctionName": "StopQBusinessExecutionFunction",
+        "Handler": "com.ethanpritchard.example.handlers.StopQBusinessExecutionHandler",
+        "MemorySize": 1280,
+        "PackageType": "Zip",
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        },
+        "Runtime": "java11",
+        "Timeout": 60
+      }
+    },
+    "TriggerBatchProcessingStateMachineFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Architectures": [
+          "x86_64"
+        ],
+        "Code": "../target/aws-qbusiness-java-boilerplate.jar",
+        "Description": "TriggerBatchProcessingStateMachineFunction.",
+        "Environment": {
+          "Variables": {
+            "BATCH_PROCESSING_STATE_MACHINE_ARN": {
+              "Fn::GetAtt": [
+                "BatchProcessingStateMachine",
+                "Arn"
+              ]
+            }
+          }
+        },
+        "FunctionName": "TriggerBatchProcessingStateMachineFunction",
+        "Handler": "com.ethanpritchard.example.handlers.TriggerBatchProcessingStateMachineHandler",
+        "MemorySize": 1280,
+        "PackageType": "Zip",
+        "Role": {
+          "Fn::GetAtt": [
+            "LambdaExecutionRole",
+            "Arn"
+          ]
+        },
+        "Runtime": "java11",
+        "Timeout": 60
+      }
+    },
+
+    "BatchProcessingStateMachineLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupClass": "STANDARD",
+        "LogGroupName": "BatchProcessingStateMachine",
+        "RetentionInDays": 365
+      }
+    },
+    "BatchProcessingStateMachine": {
+      "Type": "AWS::StepFunctions::StateMachine",
+      "Properties": {
+        "Definition": {
+          "Comment": "A state machine to handle the batch processing task. Can be triggered manually or using automation.",
+          "StartAt": "AttachCurrentPage",
+          "States": {
+            "AttachCurrentPage": {
+              "Type": "Pass",
+              "Result": {
+                "currentPage": 0
+              },
+              "ResultPath": "$.currentPage",
+              "Next": "CopyNextTokenForRecursion"
+            },
+
+            "CopyNextTokenForRecursion": {
+              "Type": "Pass",
+              "Parameters": {
+                "nextToken.$": "$.nextToken"
+              },
+              "ResultPath": "$.batchDocument",
+              "Next": "StartQBusinessExecution"
+            },
+
+            "StartQBusinessExecution": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "Payload": {
+                  "applicationId.$": "$.applicationId",
+                  "dataSourceId.$": "$.dataSourceId",
+                  "indexId.$": "$.indexId"
+                },
+                "FunctionName": {
+                  "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:StartQBusinessExecutionFunction:$LATEST"
+                }
+              },
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "ResultPath": "$.error",
+                  "Next": "CheckQBusinessExecutionId"
+                }
+              ],
+              "ResultSelector": {
+                "qBusinessExecutionId.$": "$.Payload.QBusinessExecutionId"
+              },
+              "ResultPath": "$.startQBusinessExecution",
+              "Next": "BatchDocument"
+            },
+
+            "BatchDocument": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "Payload": {
+                  "applicationId.$": "$.applicationId",
+                  "nextToken.$": "$.batchDocument.nextToken",
+                  "indexId.$": "$.indexId",
+                  "QBusinessExecutionId.$": "$.startQBusinessExecution.qBusinessExecutionId"
+                },
+                "FunctionName": {
+                  "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:BatchDocumentFunction:$LATEST"
+                }
+              },
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "ResultPath": "$.error",
+                  "Next": "CheckQBusinessExecutionId"
+                }
+              ],
+              "ResultSelector": {
+                "nextToken.$": "$.Payload.nextToken"
+              },
+              "ResultPath": "$.batchDocument",
+              "Next": "CheckNextToken"
+            },
+
+            "CheckNextToken": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.batchDocument.nextToken",
+                  "StringEquals": "",
+                  "Next": "CheckQBusinessExecutionId"
+                }
+              ],
+              "Default": "IncrementPageCount"
+            },
+
+            "IncrementPageCount": {
+              "Type": "Pass",
+              "Parameters": {
+                "currentPage.$": "States.MathAdd($.currentPage.currentPage, 1)"
+              },
+              "ResultPath": "$.currentPage",
+              "Next": "CheckPageCount"
+            },
+            "CheckPageCount": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.currentPage.currentPage",
+                  "NumericGreaterThanEqualsPath": "$.maxPages",
+                  "Next": "CheckQBusinessExecutionId"
+                }
+              ],
+              "Default": "BatchDocument"
+            },
+
+            "CheckQBusinessExecutionId": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.startQBusinessExecution.qBusinessExecutionId",
+                  "IsPresent": true,
+                  "Next": "StopQBusinessExecution"
+                }
+              ],
+              "Default": "Exit"
+            },
+            "StopQBusinessExecution": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::lambda:invoke",
+              "Parameters": {
+                "Payload": {
+                  "applicationId.$": "$.applicationId",
+                  "dataSourceId.$": "$.dataSourceId",
+                  "indexId.$": "$.indexId",
+                  "qBusinessExecutionId.$": "$.startQBusinessExecution.qBusinessExecutionId"
+                },
+                "FunctionName": {
+                  "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:StopQBusinessExecutionFunction:$LATEST"
+                }
+              },
+              "Catch": [
+                {
+                  "ErrorEquals": [
+                    "States.ALL"
+                  ],
+                  "ResultPath": "$.error",
+                  "Next": "Exit"
+                }
+              ],
+              "Next": "Exit"
+            },
+
+            "Exit": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.error",
+                  "IsPresent": true,
+                  "Next": "Failure"
+                }
+              ],
+              "Default": "Success"
+            },
+            "Success": {
+              "Type": "Succeed"
+            },
+            "Failure": {
+              "Type": "Fail",
+              "ErrorPath": "$.error"
+            }
+          }
+        },
+        "LoggingConfiguration": {
+          "Destinations": [
+            {
+              "CloudWatchLogsLogGroup": {
+                "LogGroupArn": {
+                  "Fn::GetAtt": [
+                    "BatchProcessingStateMachineLogGroup",
+                    "Arn"
+                  ]
+                }
+              }
+            }
+          ],
+          "IncludeExecutionData": true,
+          "Level": "ALL"
+        },
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "StepFunctionsStateMachineRole",
+            "Arn"
+          ]
+        },
+        "StateMachineName": "BatchProcessingStateMachine",
+        "StateMachineType": "EXPRESS"
+      }
+    }
+  },
+
+  "Outputs": {
+    "ApplicationId" : {
+      "Description" : "Q Business Application ID",
+      "Value" : {
+        "Fn::GetAtt": [
+          "QBusinessApplication",
+          "ApplicationId"
+        ]
+      }
+    },
+    "DataSourceId" : {
+      "Description" : "Q Business Data Source ID",
+      "Value" : {
+        "Fn::GetAtt": [
+          "QBusinessDataSource",
+          "DataSourceId"
+        ]
+      }
+    },
+    "IndexId" : {
+      "Description" : "Q Business Index ID",
+      "Value" : {
+        "Fn::GetAtt": [
+          "QBusinessIndex",
+          "IndexId"
+        ]
+      }
+    }
+  }
+}
