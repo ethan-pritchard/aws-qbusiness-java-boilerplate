@@ -34,6 +34,7 @@ public class TriggerBatchProcessingStateMachineHandler implements RequestHandler
                     .stateMachineArn(BATCH_PROCESSING_STATE_MACHINE_ARN)
                     .build();
             apiResponse = sfnClient.startExecution(apiRequest);
+            log.info("Successfully started batch processing state machine: {}", apiResponse.executionArn());
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
